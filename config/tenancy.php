@@ -2,15 +2,16 @@
 
 declare(strict_types=1);
 
-use Stancl\Tenancy\Middleware;
+use App\Models\Tenant;
 use Stancl\Tenancy\Resolvers;
+use Stancl\Tenancy\Middleware;
 
 return [
     /**
      * Configuration for the models used by Tenancy.
      */
     'models' => [
-        'tenant' => Stancl\Tenancy\Database\Models\Tenant::class,
+        'tenant' => Tenant::class,
         'domain' => Stancl\Tenancy\Database\Models\Domain::class,
 
         /**
@@ -38,6 +39,7 @@ return [
     'central_domains' => [
         '127.0.0.1',
         'localhost',
+        'tenancyissues.test'
     ],
 
     'identification' => [
@@ -46,7 +48,7 @@ return [
          *
          * If you use multiple forms of identification, you can set this to the "main" approach you use.
          */
-        'default_middleware' => Middleware\InitializeTenancyByDomain::class,// todo@identification add this to a 'tenancy' mw group
+        'default_middleware' => Middleware\InitializeTenancyBySubdomain::class,// todo@identification add this to a 'tenancy' mw group
 
         /**
          * All of the identification middleware used by the package.
@@ -102,6 +104,7 @@ return [
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\BatchTenancyBootstrapper::class,
+        Stancl\Tenancy\Bootstrappers\BroadcastTenancyBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\MailTenancyBootstrapper::class, // Queueing mail requires using QueueTenancyBootstrapper with $forceRefresh set to true
         // Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class, // Note: phpredis is needed
     ],
@@ -282,7 +285,7 @@ return [
     'features' => [
         // Stancl\Tenancy\Features\UserImpersonation::class,
         // Stancl\Tenancy\Features\TelescopeTags::class,
-        // Stancl\Tenancy\Features\UniversalRoutes::class,
+        Stancl\Tenancy\Features\UniversalRoutes::class,
         // Stancl\Tenancy\Features\TenantConfig::class, // https://tenancyforlaravel.com/docs/v3/features/tenant-config
         // Stancl\Tenancy\Features\CrossDomainRedirect::class, // https://tenancyforlaravel.com/docs/v3/features/cross-domain-redirect
     ],
