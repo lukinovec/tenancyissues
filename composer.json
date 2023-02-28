@@ -7,22 +7,22 @@
     "require": {
         "php": "^8.2",
         "guzzlehttp/guzzle": "^7.2",
-        "laravel/framework": "^9.21",
+        "laravel/jetstream": "^3.0",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
+        "livewire/livewire": "^2.11",
         "pusher/pusher-php-server": "^7.2",
         "spatie/invade": "^1.1",
-        "stancl/tenancy": "^3.7"
+        "stancl/tenancy": "@dev"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.0.1",
         "mockery/mockery": "^1.4.4",
-        "nunomaduro/collision": "^6.1",
+        "nunomaduro/collision": "^6.4",
         "pestphp/pest": "^1.22",
-        "pestphp/pest-plugin-laravel": "^1.4",
-        "phpunit/phpunit": "^9.5.10",
+        "pestphp/pest-plugin-laravel": "^1.2",
         "spatie/laravel-ignition": "^1.0",
         "spatie/ray": "^1.36"
     },
@@ -67,5 +67,11 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../v4"
+        }
+    ]
 }
