@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Livewire\Testing;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,4 +24,6 @@ Route::middleware([
     Route::get('/', function () {
         return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
     });
+
+    Route::get('/testing', Testing::class)->name('testing');
 });
