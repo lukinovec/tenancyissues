@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Stancl\Tenancy\Jobs;
+use Stancl\Tenancy\Events;
+use Stancl\Tenancy\Listeners;
+use Stancl\Tenancy\Middleware;
+use Stancl\JobPipeline\JobPipeline;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Stancl\JobPipeline\JobPipeline;
-use Stancl\Tenancy\Events;
-use Stancl\Tenancy\Jobs;
-use Stancl\Tenancy\Listeners;
-use Stancl\Tenancy\Middleware;
+use Illuminate\Routing\Route as RoutingRoute;
+use Stancl\Tenancy\Resolvers\PathTenantResolver;
+use Stancl\Tenancy\Actions\ReregisterUniversalRoutes;
+use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 
 class TenancyServiceProvider extends ServiceProvider
 {
@@ -103,6 +107,37 @@ class TenancyServiceProvider extends ServiceProvider
         $this->mapRoutes();
 
         $this->makeTenancyMiddlewareHighestPriority();
+
+        if (InitializeTenancyByPath::inGlobalStack()) {
+            /** @var ReregisterUniversalRoutes $reregisterRoutesAction */
+            $reregisterRoutesAction = app(ReregisterUniversalRoutes::class);
+
+            $reregisterRoutesAction
+                ->reregisterUsing('livewire.message', function () {
+                    return;
+                })
+                ->reregisterUsing('livewire.message-localized', function (RoutingRoute $route) {
+                    $route->setUri(str($route->uri())->replaceFirst('locale', PathTenantResolver::tenantParameterName()));
+
+                    return;
+                });
+
+            $reregisterRoutesAction->handle();
+
+            /**
+             * You can provide a closure for re-registering a specific route, e.g.:
+             * app(ReregisterUniversalRoutes::class)
+             *  ->reregisterUsing('welcome', function () {
+             *      Route::get('/tenant-welcome', fn() => tenant()->getTenantKey())
+             *          ->middleware(['universal', InitializeTenancyByPath::class])
+             *          ->name('tenant.welcome');
+             *  })
+             *  ->handle();
+             *
+             * To see the default behavior of re-registering the universal routes, check out the reregisterRoute() method in ReregisterUniversalRoutes.
+             * @see ReregisterUniversalRoutes
+             */
+        }
     }
 
     protected function bootEvents()

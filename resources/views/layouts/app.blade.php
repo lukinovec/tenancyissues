@@ -32,5 +32,8 @@
         </div>
 
         @livewireScripts
+        <script>
+            window.livewire_app_url = @json(tenant() ? '/' . tenant()->getTenantKey() : '');
+        </script>
     </body>
 </html>

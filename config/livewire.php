@@ -82,9 +82,9 @@ return [
     */
 
     'middleware_group' => [
-        'web',
         'universal',
-        'tenant',
+        'web',
+        // 'tenant'
     ],
 
     /*
