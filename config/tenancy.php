@@ -48,7 +48,7 @@ return [
          *
          * If you use multiple forms of identification, you can set this to the "main" approach you use.
          */
-        'default_middleware' => Middleware\InitializeTenancyBySubdomain::class,// todo@identification add this to a 'tenancy' mw group
+        'default_middleware' => Middleware\InitializeTenancyBySubdomain::class, // todo@identification add this to a 'tenancy' mw group
 
         /**
          * All of the identification middleware used by the package.
