@@ -16,15 +16,14 @@
         "stancl/tenancy": "@dev"
     },
     "require-dev": {
-        "fakerphp/faker": "^1.9.1",
-        "laravel/pint": "^1.0",
+        "fakerphp/faker": "^1.22",
+        "laravel/pint": "^1.10",
         "laravel/sail": "^1.0.1",
         "mockery/mockery": "^1.4.4",
-        "nunomaduro/collision": "^6.4",
-        "pestphp/pest": "^1.22",
-        "pestphp/pest-plugin-laravel": "^1.2",
-        "spatie/laravel-ignition": "^1.0",
-        "spatie/ray": "^1.36"
+        "nunomaduro/collision": "^7.5",
+        "pestphp/pest": "^2.6",
+        "pestphp/pest-plugin-laravel": "^2.0",
+        "spatie/laravel-ignition": "^2.1"
     },
     "autoload": {
         "psr-4": {
