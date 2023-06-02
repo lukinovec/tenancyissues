@@ -10,7 +10,7 @@
         "laravel/jetstream": "^3.0",
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
-        "livewire/livewire": "^2.11",
+        "livewire/livewire": "^2.12.2",
         "pusher/pusher-php-server": "^7.2",
         "spatie/invade": "^1.1",
         "stancl/tenancy": "@dev"
