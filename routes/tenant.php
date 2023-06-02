@@ -26,18 +26,9 @@ Route::middleware([
     PreventAccessFromUnwantedDomains::class,
 ])->group(function () {
     Route::get('/', function () {
-        return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
-    });
-});
-
-Route::middleware([
-    'web',
-    'tenant',
-    'universal',
-])->group(function () {
-    Route::get('/', function () {
         return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id') . ' and the current user is ' . auth()?->user()?->email;
     });
+
     Route::get('/csrf-cookie', [CsrfCookieController::class, 'show'])->name('sanctum.csrf-cookie');
 });
 
