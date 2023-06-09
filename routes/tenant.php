@@ -22,8 +22,7 @@ use Stancl\Tenancy\Middleware\PreventAccessFromUnwantedDomains;
 
 Route::middleware([
     'web',
-    InitializeTenancyBySubdomain::class,
-    PreventAccessFromUnwantedDomains::class,
+    'universal'
 ])->group(function () {
     Route::get('/', function () {
         return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id') . ' and the current user is ' . auth()?->user()?->email;

@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\ServiceProvider;
-use Stancl\JobPipeline\JobPipeline;
-use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Jobs;
+use Stancl\Tenancy\Events;
+use Illuminate\Routing\Route;
 use Stancl\Tenancy\Listeners;
 use Stancl\Tenancy\Middleware;
+use Stancl\JobPipeline\JobPipeline;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\ServiceProvider;
+use Stancl\Tenancy\TenancyUrlGenerator;
+use Stancl\Tenancy\Resolvers\PathTenantResolver;
+use Illuminate\Support\Facades\Route as RouteFacade;
+use Stancl\Tenancy\Actions\ReregisterUniversalRoutes;
+use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 
 class TenancyServiceProvider extends ServiceProvider
 {
@@ -29,25 +34,45 @@ class TenancyServiceProvider extends ServiceProvider
                     Jobs\MigrateDatabase::class,
                     // Jobs\SeedDatabase::class,
 
+                    // Jobs\CreateStorageSymlinks::class,
+
                     // Your own jobs to prepare the tenant.
                     // Provision API keys, create S3 buckets, anything you want!
-
                 ])->send(function (Events\TenantCreated $event) {
                     return $event->tenant;
                 })->shouldBeQueued(false), // `false` by default, but you probably want to make this `true` for production.
+
+                // Listeners\CreateTenantStorage::class,
             ],
             Events\SavingTenant::class => [],
             Events\TenantSaved::class => [],
             Events\UpdatingTenant::class => [],
             Events\TenantUpdated::class => [],
-            Events\DeletingTenant::class => [],
+            Events\DeletingTenant::class => [
+                JobPipeline::make([
+                    Jobs\DeleteDomains::class,
+                ])->send(function (Events\DeletingTenant $event) {
+                    return $event->tenant;
+                })->shouldBeQueued(false),
+
+                // Listeners\DeleteTenantStorage::class,
+            ],
             Events\TenantDeleted::class => [
                 JobPipeline::make([
                     Jobs\DeleteDatabase::class,
+                    // Jobs\RemoveStorageSymlinks::class,
                 ])->send(function (Events\TenantDeleted $event) {
                     return $event->tenant;
                 })->shouldBeQueued(false), // `false` by default, but you probably want to make this `true` for production.
             ],
+            Events\TenantMaintenanceModeEnabled::class => [],
+            Events\TenantMaintenanceModeDisabled::class => [],
+
+            // Pending tenant events
+            Events\CreatingPendingTenant::class => [],
+            Events\PendingTenantCreated::class => [],
+            Events\PullingPendingTenant::class => [],
+            Events\PendingTenantPulled::class => [],
 
             // Domain events
             Events\CreatingDomain::class => [],
@@ -87,9 +112,30 @@ class TenancyServiceProvider extends ServiceProvider
                 Listeners\UpdateSyncedResource::class,
             ],
 
+            // Storage symlinks
+            Events\CreatingStorageSymlink::class => [],
+            Events\StorageSymlinkCreated::class => [],
+            Events\RemovingStorageSymlink::class => [],
+            Events\StorageSymlinkRemoved::class => [],
+
             // Fired only when a synced resource is changed in a different DB than the origin DB (to avoid infinite loops)
             Events\SyncedResourceChangedInForeignDatabase::class => [],
         ];
+    }
+
+    protected function overrideUrlInTenantContext(): void
+    {
+        /**
+         * Example of CLI tenant URL root override:
+         *
+         * UrlTenancyBootstrapper::$rootUrlOverride = function (Tenant $tenant) {
+         *     $baseUrl = env('APP_URL');
+         *     $scheme = str($baseUrl)->before('://');
+         *     $hostname = str($baseUrl)->after($scheme . '://');
+         *
+         *     return $scheme . '://' . $tenant->getTenantKey() . '.' . $hostname;
+         * };
+         */
     }
 
     public function register()
@@ -103,6 +149,24 @@ class TenancyServiceProvider extends ServiceProvider
         $this->mapRoutes();
 
         $this->makeTenancyMiddlewareHighestPriority();
+        $this->overrideUrlInTenantContext();
+
+        if (InitializeTenancyByPath::inGlobalStack()) {
+            TenancyUrlGenerator::$prefixRouteNames = true;
+
+            /** @var ReregisterUniversalRoutes $reregisterRoutesAction */
+            $reregisterRoutesAction = app(ReregisterUniversalRoutes::class);
+
+            $reregisterRoutesAction->reregisterUsing('livewire.message', function () {
+                return;
+            })->reregisterUsing('livewire.message-localized', function (Route $route) {
+                $route->setUri(str($route->uri())->replaceFirst('locale', PathTenantResolver::tenantParameterName()));
+
+                return;
+            });
+
+            $reregisterRoutesAction->handle();
+        }
     }
 
     protected function bootEvents()
@@ -121,23 +185,16 @@ class TenancyServiceProvider extends ServiceProvider
     protected function mapRoutes()
     {
         if (file_exists(base_path('routes/tenant.php'))) {
-            Route::namespace(static::$controllerNamespace)
+            RouteFacade::namespace(static::$controllerNamespace)
+                ->middleware('tenant')
                 ->group(base_path('routes/tenant.php'));
         }
     }
 
     protected function makeTenancyMiddlewareHighestPriority()
     {
-        $tenancyMiddleware = [
-            // Even higher priority than the initialization middleware
-            Middleware\PreventAccessFromUnwantedDomains::class,
-
-            Middleware\InitializeTenancyByDomain::class,
-            Middleware\InitializeTenancyBySubdomain::class,
-            Middleware\InitializeTenancyByDomainOrSubdomain::class,
-            Middleware\InitializeTenancyByPath::class,
-            Middleware\InitializeTenancyByRequestData::class,
-        ];
+        // PreventAccessFromUnwantedDomains has even higher priority than the identification middleware
+        $tenancyMiddleware = array_merge([Middleware\PreventAccessFromUnwantedDomains::class], config('tenancy.identification.middleware'));
 
         foreach (array_reverse($tenancyMiddleware) as $middleware) {
             $this->app[\Illuminate\Contracts\Http\Kernel::class]->prependToMiddlewarePriority($middleware);

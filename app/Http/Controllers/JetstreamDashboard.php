@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Support\Facades\Route;
 
 class JetstreamDashboard extends Controller // implements HasMiddleware
 {

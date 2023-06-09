@@ -89,7 +89,7 @@ return [
     |
     */
 
-    'middleware' => ['tenant', 'web', 'universal'],
+    'middleware' => ['universal', 'web'],
 
     /*
     |--------------------------------------------------------------------------

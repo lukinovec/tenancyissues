@@ -6,6 +6,7 @@ use App\Providers\RouteServiceProvider;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Stancl\Tenancy\Resolvers\PathTenantResolver;
 
 class RedirectIfAuthenticated
 {

@@ -29,7 +29,7 @@ return [
      |
      */
 
-    'middleware' => ['tenant', 'web', 'universal'],
+    'middleware' => ['universal', 'web'],
 
     'auth_session' => AuthenticateSession::class,
 
@@ -59,7 +59,7 @@ return [
 
     'features' => [
         // Features::termsAndPrivacyPolicy(),
-        // Features::profilePhotos(),
+        Features::profilePhotos(),
         // Features::api(),
         Features::teams(['invitations' => true]),
         Features::accountDeletion(),
