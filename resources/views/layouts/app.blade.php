@@ -33,7 +33,11 @@
 
         @livewireScripts
         <script>
-            window.livewire_app_url = @json(tenant() ? '/' . tenant()->getTenantKey() : '');
+            let tenantKey = @json(tenant()?->getTenantKey())
+
+            if (tenantKey) {
+                window.livewire_app_url = '/' + tenantKey
+            }
         </script>
     </body>
 </html>
