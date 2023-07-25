@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Livewire\Livewire;
 use Stancl\Tenancy\Jobs;
 use Stancl\Tenancy\Events;
-use Illuminate\Routing\Route;
 use Stancl\Tenancy\Listeners;
 use Stancl\Tenancy\Middleware;
 use Stancl\JobPipeline\JobPipeline;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Stancl\Tenancy\TenancyUrlGenerator;
-use Stancl\Tenancy\Resolvers\PathTenantResolver;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Stancl\Tenancy\Actions\ReregisterUniversalRoutes;
+use Stancl\Tenancy\Commands\Run;
 use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
+use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
+use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
+use Stancl\Tenancy\Middleware\PreventAccessFromUnwantedDomains;
 
 class TenancyServiceProvider extends ServiceProvider
 {
@@ -151,21 +155,41 @@ class TenancyServiceProvider extends ServiceProvider
         $this->makeTenancyMiddlewareHighestPriority();
         $this->overrideUrlInTenantContext();
 
+        if (InitializeTenancyByRequestData::inGlobalStack()) {
+            TenancyUrlGenerator::$prefixRouteNames = false;
+        }
+
+        Livewire::setUpdateRoute(function ($handle) {
+            return Route::post('/livewire/update', $handle)->middleware(['universal', InitializeTenancyByRequestData::class, 'web']);
+        });
+
         if (InitializeTenancyByPath::inGlobalStack()) {
             TenancyUrlGenerator::$prefixRouteNames = true;
 
-            /** @var ReregisterUniversalRoutes $reregisterRoutesAction */
-            $reregisterRoutesAction = app(ReregisterUniversalRoutes::class);
+            /** @var ReregisterUniversalRoutes $reregisterRoutes */
+            $reregisterRoutes = app(ReregisterUniversalRoutes::class);
 
-            $reregisterRoutesAction->reregisterUsing('livewire.message', function () {
-                return;
-            })->reregisterUsing('livewire.message-localized', function (Route $route) {
-                $route->setUri(str($route->uri())->replaceFirst('locale', PathTenantResolver::tenantParameterName()));
+            /**
+             * You can provide a closure for re-registering a specific route, e.g.:
+             * $reregisterRoutes->reregisterUsing('welcome', function () {
+             *      Route::get('/tenant-welcome', fn () => 'Current tenant: ' . tenant()->getTenantKey())
+             *          ->middleware(['universal', InitializeTenancyByPath::class])
+             *          ->name('tenant.welcome');
+             * });
+             *
+             * To make Livewire (v2.12.2+) work with kernel path identification, use this closure to override the livewire.message-localized route:
+             *
+             * $reregisterRoutes->reregisterUsing('livewire.message-localized', function (Route $route) {
+             *     $route->setUri(str($route->uri())->replaceFirst('locale', $tenantParameter = PathTenantResolver::tenantParameterName()));
+             *     $route->parameterNames[0] = $tenantParameter;
+             *     $route->middleware('tenant');
+             * });
+             *
+             * To see the default behavior of re-registering the universal routes, check out the reregisterRoute() method in ReregisterUniversalRoutes.
+             * @see ReregisterUniversalRoutes
+             */
 
-                return;
-            });
-
-            $reregisterRoutesAction->handle();
+            $reregisterRoutes->handle();
         }
     }
 

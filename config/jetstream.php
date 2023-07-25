@@ -2,6 +2,7 @@
 
 use Laravel\Jetstream\Features;
 use Laravel\Jetstream\Http\Middleware\AuthenticateSession;
+use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
 
 return [
 
@@ -29,7 +30,7 @@ return [
      |
      */
 
-    'middleware' => ['universal', 'web'],
+    'middleware' => ['universal', InitializeTenancyByRequestData::class, 'web'],
 
     'auth_session' => AuthenticateSession::class,
 

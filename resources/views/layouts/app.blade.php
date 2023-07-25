@@ -21,6 +21,7 @@
         <x-banner />
 
         <div class="min-h-screen bg-gray-100">
+            {{ tenant()?->getTenantKey() ?? 'No tenant' }}
             @livewire('navigation-menu')
 
             <!-- Page Heading -->
@@ -42,7 +43,14 @@
 
         @livewireScripts
         <script>
-            window.livewire_app_url = @json(tenant() ? '/' . tenant()->getTenantKey() : '');
+            let tenantKey = @json(tenant()?->getTenantKey())
+
+            if(tenantKey) {
+                window.Livewire.connection.headers = {
+                    ...window.Livewire.connection.headers,
+                    @json(\Stancl\Tenancy\Middleware\InitializeTenancyByRequestData::$header): tenantKey
+                }
+            }
         </script>
     </body>
 </html>

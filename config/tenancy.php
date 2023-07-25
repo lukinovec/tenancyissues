@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Tenant;
 use Stancl\Tenancy\Resolvers;
+use Stancl\Tenancy\RouteMode;
 use Stancl\Tenancy\Middleware;
 
 return [
@@ -62,6 +63,26 @@ return [
             Middleware\InitializeTenancyByPath::class,
             Middleware\InitializeTenancyByRequestData::class,
         ],
+
+        /**
+         * Identification middleware tenancy recognizes as domain identification middleware.
+         *
+         * This is used for determining whether to skip the access prevention middleware.
+         * PreventAccessFromUnwantedDomains is intended to be used only with the middleware included here.
+         * It will get skipped if it's used with other identification middleware.
+         *
+         * If you're using a custom domain identification middleware, add it here.
+         *
+         * @see \Stancl\Tenancy\Concerns\UsableWithEarlyIdentification
+         * @see \Stancl\Tenancy\Middleware\PreventAccessFromUnwantedDomains
+         */
+        'domain_identification_middleware' => [
+            Middleware\InitializeTenancyByDomain::class,
+            Middleware\InitializeTenancyBySubdomain::class,
+            Middleware\InitializeTenancyByDomainOrSubdomain::class,
+        ],
+
+        'path_identification_middleware' => Middleware\InitializeTenancyByPath::class,
 
         /**
          * Tenant resolvers used by the package.
@@ -182,7 +203,7 @@ return [
     ],
 
     /**
-     * Cache tenancy config. Used by CacheTenancyBootstrapper.
+     * Cache tenancy config. Used by the custom CacheManager and the PrefixCacheTenancyBootstrapper.
      *
      * This works for all Cache facade calls, cache() helper
      * calls and direct calls to injected cache stores.
@@ -194,6 +215,7 @@ return [
      */
     'cache' => [
         'tag_base' => 'tenant', // This tag_base, followed by the tenant_id, will form a tag that will be applied on each cache call.
+        'prefix_base' => 'tenant_', // This prefix_base, followed by the tenant_id, will form a cache prefix that will be used for every cache key.
     ],
 
     /**
@@ -303,13 +325,11 @@ return [
     'routes' => true,
 
     /**
-     * Make all routes tenant by default.
+     * Make all routes central, tenant, or universal by default.
      *
-     * If true, all routes are made tenant by default. To make them central, apply the 'central' middleware and modify the RouteServiceProvider todo@docs specific section link.
-     *
-     * If false, all routes are made central by default. To make them tenant, apply the 'tenant' middleware.
+     * To override the default route mode, apply the middleware of another route mode ('central', 'tenant', 'universal') to the route.
      */
-    'default_to_tenant_routes' => false,
+    'default_route_mode' => RouteMode::CENTRAL,
 
     /**
      * Parameters used by the tenants:migrate command.

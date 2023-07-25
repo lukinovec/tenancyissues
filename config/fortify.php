@@ -1,7 +1,8 @@
 <?php
 
-use App\Providers\RouteServiceProvider;
 use Laravel\Fortify\Features;
+use App\Providers\RouteServiceProvider;
+use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
 
 return [
 
@@ -89,7 +90,7 @@ return [
     |
     */
 
-    'middleware' => ['universal', 'web'],
+    'middleware' => ['universal', InitializeTenancyByRequestData::class, 'web'],
 
     /*
     |--------------------------------------------------------------------------
@@ -138,8 +139,8 @@ return [
         Features::updateProfileInformation(),
         Features::updatePasswords(),
         Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
+            'confirm' => false,
+            'confirmPassword' => false,
             // 'window' => 0,
         ]),
     ],
