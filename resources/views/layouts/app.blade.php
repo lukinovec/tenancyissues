@@ -42,15 +42,19 @@
         @stack('modals')
 
         @livewireScripts
-        <script>
-            let tenantKey = @json(tenant()?->getTenantKey())
 
-            if(tenantKey) {
-                window.Livewire.connection.headers = {
-                    ...window.Livewire.connection.headers,
-                    @json(\Stancl\Tenancy\Middleware\InitializeTenancyByRequestData::$header): tenantKey
-                }
-            }
-        </script>
+        @if(tenant())
+            <script>
+                let _fetch = window.fetch;
+
+                window.fetch = (resource, options = {}) => {
+                    if (options.headers && options.headers['X-Livewire'] !== undefined) {
+                        options.headers[@json(\Stancl\Tenancy\Middleware\InitializeTenancyByRequestData::$header)] = @json(tenant()?->getTenantKey());
+                    }
+
+                    return _fetch(resource, options);
+                };
+            </script>
+        @endif
     </body>
 </html>
