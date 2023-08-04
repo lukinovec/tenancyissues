@@ -14,8 +14,6 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        <!-- Styles -->
-        @livewireStyles
     </head>
     <body class="font-sans antialiased">
         <x-banner />
@@ -40,21 +38,5 @@
         </div>
 
         @stack('modals')
-
-        @livewireScripts
-
-        @if(tenant())
-            <script>
-                let _fetch = window.fetch;
-
-                window.fetch = (resource, options = {}) => {
-                    if (options.headers && options.headers['X-Livewire'] !== undefined) {
-                        options.headers[@json(\Stancl\Tenancy\Middleware\InitializeTenancyByRequestData::$header)] = @json(tenant()?->getTenantKey());
-                    }
-
-                    return _fetch(resource, options);
-                };
-            </script>
-        @endif
     </body>
 </html>

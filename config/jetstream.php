@@ -30,7 +30,7 @@ return [
      |
      */
 
-    'middleware' => ['universal', InitializeTenancyByRequestData::class, 'web'],
+    'middleware' => ['universal', 'web'],
 
     'auth_session' => AuthenticateSession::class,
 

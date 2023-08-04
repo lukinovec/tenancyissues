@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use Livewire\Livewire;
 use Stancl\Tenancy\Jobs;
 use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Listeners;
@@ -13,14 +12,6 @@ use Stancl\JobPipeline\JobPipeline;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Stancl\Tenancy\TenancyUrlGenerator;
-use Illuminate\Support\Facades\Route as RouteFacade;
-use Stancl\Tenancy\Actions\ReregisterUniversalRoutes;
-use Stancl\Tenancy\Commands\Run;
-use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
-use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
-use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
-use Stancl\Tenancy\Middleware\PreventAccessFromUnwantedDomains;
 
 class TenancyServiceProvider extends ServiceProvider
 {
@@ -39,6 +30,7 @@ class TenancyServiceProvider extends ServiceProvider
                     // Jobs\SeedDatabase::class,
 
                     // Jobs\CreateStorageSymlinks::class,
+                    // Jobs\CreatePostgresUserForTenant::class,
 
                     // Your own jobs to prepare the tenant.
                     // Provision API keys, create S3 buckets, anything you want!
@@ -64,6 +56,7 @@ class TenancyServiceProvider extends ServiceProvider
             Events\TenantDeleted::class => [
                 JobPipeline::make([
                     Jobs\DeleteDatabase::class,
+                    // Jobs\DeleteTenantsPostgresUser::class,
                     // Jobs\RemoveStorageSymlinks::class,
                 ])->send(function (Events\TenantDeleted $event) {
                     return $event->tenant;
@@ -154,43 +147,6 @@ class TenancyServiceProvider extends ServiceProvider
 
         $this->makeTenancyMiddlewareHighestPriority();
         $this->overrideUrlInTenantContext();
-
-        if (InitializeTenancyByRequestData::inGlobalStack()) {
-            TenancyUrlGenerator::$prefixRouteNames = false;
-        }
-
-        Livewire::setUpdateRoute(function ($handle) {
-            return Route::post('/livewire/update', $handle)->middleware(['universal', InitializeTenancyByRequestData::class, 'web']);
-        });
-
-        if (InitializeTenancyByPath::inGlobalStack()) {
-            TenancyUrlGenerator::$prefixRouteNames = true;
-
-            /** @var ReregisterUniversalRoutes $reregisterRoutes */
-            $reregisterRoutes = app(ReregisterUniversalRoutes::class);
-
-            /**
-             * You can provide a closure for re-registering a specific route, e.g.:
-             * $reregisterRoutes->reregisterUsing('welcome', function () {
-             *      Route::get('/tenant-welcome', fn () => 'Current tenant: ' . tenant()->getTenantKey())
-             *          ->middleware(['universal', InitializeTenancyByPath::class])
-             *          ->name('tenant.welcome');
-             * });
-             *
-             * To make Livewire (v2.12.2+) work with kernel path identification, use this closure to override the livewire.message-localized route:
-             *
-             * $reregisterRoutes->reregisterUsing('livewire.message-localized', function (Route $route) {
-             *     $route->setUri(str($route->uri())->replaceFirst('locale', $tenantParameter = PathTenantResolver::tenantParameterName()));
-             *     $route->parameterNames[0] = $tenantParameter;
-             *     $route->middleware('tenant');
-             * });
-             *
-             * To see the default behavior of re-registering the universal routes, check out the reregisterRoute() method in ReregisterUniversalRoutes.
-             * @see ReregisterUniversalRoutes
-             */
-
-            $reregisterRoutes->handle();
-        }
     }
 
     protected function bootEvents()
@@ -209,15 +165,14 @@ class TenancyServiceProvider extends ServiceProvider
     protected function mapRoutes()
     {
         if (file_exists(base_path('routes/tenant.php'))) {
-            RouteFacade::namespace(static::$controllerNamespace)
-                ->middleware('tenant')
+            Route::namespace(static::$controllerNamespace)
                 ->group(base_path('routes/tenant.php'));
         }
     }
 
     protected function makeTenancyMiddlewareHighestPriority()
     {
-        // PreventAccessFromUnwantedDomains has even higher priority than the identification middleware
+        // PreventAccessFromCentralDomains has even higher priority than the identification middleware
         $tenancyMiddleware = array_merge([Middleware\PreventAccessFromUnwantedDomains::class], config('tenancy.identification.middleware'));
 
         foreach (array_reverse($tenancyMiddleware) as $middleware) {

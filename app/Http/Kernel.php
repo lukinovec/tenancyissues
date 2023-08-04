@@ -3,6 +3,10 @@
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
+use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
+use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
+use Stancl\Tenancy\Middleware\PreventAccessFromUnwantedDomains;
 
 class Kernel extends HttpKernel
 {
@@ -21,9 +25,9 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        // InitializeTenancyByRequestData::class,
-        // PreventAccessFromUnwantedDomains::class,
+        PreventAccessFromUnwantedDomains::class,
         // InitializeTenancyBySubdomain::class,
+        InitializeTenancyByPath::class,
     ];
 
     /**

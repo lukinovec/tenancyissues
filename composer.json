@@ -13,7 +13,7 @@
         "livewire/livewire": "^3.0@beta",
         "pusher/pusher-php-server": "^7.2",
         "spatie/invade": "^1.1",
-        "stancl/tenancy": "@dev",
+        "stancl/tenancy": "dev-add-postgres-rls-support",
         "symfony/finder": "^6.3"
     },
     "require-dev": {
@@ -67,11 +67,5 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true,
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../v4"
-        }
-    ]
+    "prefer-stable": true
 }

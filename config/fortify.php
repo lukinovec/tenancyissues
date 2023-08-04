@@ -90,7 +90,7 @@ return [
     |
     */
 
-    'middleware' => ['universal', InitializeTenancyByRequestData::class, 'web'],
+    'middleware' => ['universal', 'web'],
 
     /*
     |--------------------------------------------------------------------------
