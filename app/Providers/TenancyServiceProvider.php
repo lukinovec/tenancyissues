@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use Livewire\Livewire;
 use Stancl\Tenancy\Jobs;
 use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Listeners;
@@ -39,6 +38,7 @@ class TenancyServiceProvider extends ServiceProvider
                     // Jobs\SeedDatabase::class,
 
                     // Jobs\CreateStorageSymlinks::class,
+                    // Jobs\CreatePostgresUserForTenant::class,
 
                     // Your own jobs to prepare the tenant.
                     // Provision API keys, create S3 buckets, anything you want!
@@ -64,6 +64,7 @@ class TenancyServiceProvider extends ServiceProvider
             Events\TenantDeleted::class => [
                 JobPipeline::make([
                     Jobs\DeleteDatabase::class,
+                    // Jobs\DeleteTenantsPostgresUser::class,
                     // Jobs\RemoveStorageSymlinks::class,
                 ])->send(function (Events\TenantDeleted $event) {
                     return $event->tenant;
@@ -209,15 +210,14 @@ class TenancyServiceProvider extends ServiceProvider
     protected function mapRoutes()
     {
         if (file_exists(base_path('routes/tenant.php'))) {
-            RouteFacade::namespace(static::$controllerNamespace)
-                ->middleware('tenant')
+            Route::namespace(static::$controllerNamespace)
                 ->group(base_path('routes/tenant.php'));
         }
     }
 
     protected function makeTenancyMiddlewareHighestPriority()
     {
-        // PreventAccessFromUnwantedDomains has even higher priority than the identification middleware
+        // PreventAccessFromCentralDomains has even higher priority than the identification middleware
         $tenancyMiddleware = array_merge([Middleware\PreventAccessFromUnwantedDomains::class], config('tenancy.identification.middleware'));
 
         foreach (array_reverse($tenancyMiddleware) as $middleware) {

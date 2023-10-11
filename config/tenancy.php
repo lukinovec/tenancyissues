@@ -6,13 +6,14 @@ use App\Models\Tenant;
 use Stancl\Tenancy\Resolvers;
 use Stancl\Tenancy\Enums\RouteMode;
 use Stancl\Tenancy\Middleware;
+use Stancl\Tenancy\Resolvers;
 
 return [
     /**
      * Configuration for the models used by Tenancy.
      */
     'models' => [
-        'tenant' => Tenant::class,
+        'tenant' => Stancl\Tenancy\Database\Models\Tenant::class,
         'domain' => Stancl\Tenancy\Database\Models\Domain::class,
 
         /**
@@ -40,7 +41,6 @@ return [
     'central_domains' => [
         '127.0.0.1',
         'localhost',
-        'tenancyissues.test',
     ],
 
     'identification' => [
@@ -49,7 +49,7 @@ return [
          *
          * If you use multiple forms of identification, you can set this to the "main" approach you use.
          */
-        'default_middleware' => Middleware\InitializeTenancyBySubdomain::class, // todo@identification add this to a 'tenancy' mw group
+        'default_middleware' => Middleware\InitializeTenancyByDomain::class,// todo@identification add this to a 'tenancy' mw group
 
         /**
          * All of the identification middleware used by the package.
@@ -123,14 +123,12 @@ return [
      */
     'bootstrappers' => [
         Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\PrefixCacheTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
         Stancl\Tenancy\Bootstrappers\BatchTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\UrlBindingBootstrapper::class,
+        // Stancl\Tenancy\Bootstrappers\PrefixCacheTenancyBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\UrlTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\SessionTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\Integrations\FortifyRouteTenancyBootstrapper::class,
+        // Stancl\Tenancy\Bootstrappers\SessionTenancyBootstrapper::class,
         // Stancl\Tenancy\Bootstrappers\MailTenancyBootstrapper::class, // Queueing mail requires using QueueTenancyBootstrapper with $forceRefresh set to true
         // Stancl\Tenancy\Bootstrappers\RedisTenancyBootstrapper::class, // Note: phpredis is needed
     ],
@@ -202,6 +200,37 @@ return [
 
         // todo docblock
         'drop_tenant_databases_on_migrate_fresh' => false,
+    ],
+
+    /**
+     * Requires Postgres with single-database tenancy.
+     */
+    'rls' => [
+        /**
+         * Scope tenant models using RLS.
+         */
+        'enabled' => false,
+
+        /**
+         * Permissions to grant to the tenant Postgres users.
+         *
+         * By default, all permissions are granted.
+         *
+         * @see Stancl\Tenancy\Jobs\CreatePostgresUserForTenant
+         */
+        'user_permissions' => ['UPDATE', 'DELETE', 'SELECT', 'INSERT'],
+
+        /**
+         * Directories in which Tenancy will discover your models.
+         * Subdirectories of the specified directories are also scanned.
+         *
+         * For example, specifying 'app/Models' will discover all models in the 'app/Models' directory and all of its subdirectories.
+         * Specifying 'app/Models/*' will discover all models in the subdirectories of 'app/Models' (+ their subdirectories),
+         * but not the models present directly in the 'app/Models' directory.
+         *
+         * @see Stancl\Tenancy\Commands\CreateRLSPoliciesForTenantTables
+         */
+        'model_directories' => ['app/Models'],
     ],
 
     /**
@@ -282,7 +311,7 @@ return [
          * disable asset() helper tenancy and explicitly use tenant_asset() calls in places
          * where you want to use tenant-specific assets (product images, avatars, etc).
          */
-        'asset_helper_tenancy' => false,
+        'asset_helper_tenancy' => true,
     ],
 
     /**
@@ -325,13 +354,6 @@ return [
      * storage (e.g. S3 / Dropbox) or have a custom asset controller.
      */
     'routes' => true,
-
-    /**
-     * Make all routes central, tenant, or universal by default.
-     *
-     * To override the default route mode, apply the middleware of another route mode ('central', 'tenant', 'universal') to the route.
-     */
-    'default_route_mode' => RouteMode::CENTRAL,
 
     /**
      * Parameters used by the tenants:migrate command.
