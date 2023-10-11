@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Tenant;
 use Stancl\Tenancy\Resolvers;
-use Stancl\Tenancy\RouteMode;
+use Stancl\Tenancy\Enums\RouteMode;
 use Stancl\Tenancy\Middleware;
 
 return [
@@ -82,7 +82,9 @@ return [
             Middleware\InitializeTenancyByDomainOrSubdomain::class,
         ],
 
-        'path_identification_middleware' => Middleware\InitializeTenancyByPath::class,
+        'path_identification_middleware' => [
+            Middleware\InitializeTenancyByPath::class,
+        ],
 
         /**
          * Tenant resolvers used by the package.

@@ -20,7 +20,6 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
 
 Route::middleware([
     'web',
-    InitializeTenancyByRequestData::class,
     'universal',
     'auth:sanctum',
     config('jetstream.auth_session'),
@@ -33,7 +32,6 @@ Route::middleware([
 
 Route::middleware([
     'web',
-    InitializeTenancyByRequestData::class,
     'universal',
 ])->group(function () {
     Route::get('/', function () {

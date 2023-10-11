@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 
 class Kernel extends HttpKernel
 {
@@ -23,7 +24,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         // InitializeTenancyByRequestData::class,
         // PreventAccessFromUnwantedDomains::class,
-        // InitializeTenancyBySubdomain::class,
+        InitializeTenancyByPath::class,
     ];
 
     /**

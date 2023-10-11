@@ -13,9 +13,9 @@ use Stancl\JobPipeline\JobPipeline;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Stancl\Tenancy\TenancyUrlGenerator;
+use Stancl\Tenancy\Overrides\TenancyUrlGenerator;
 use Illuminate\Support\Facades\Route as RouteFacade;
-use Stancl\Tenancy\Actions\ReregisterUniversalRoutes;
+use Stancl\Tenancy\Actions\CloneRoutesAsTenant;
 use Stancl\Tenancy\Commands\Run;
 use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
@@ -160,14 +160,14 @@ class TenancyServiceProvider extends ServiceProvider
         }
 
         Livewire::setUpdateRoute(function ($handle) {
-            return Route::post('/livewire/update', $handle)->middleware(['universal', InitializeTenancyByRequestData::class, 'web']);
+            return Route::post('/livewire/update', $handle)->middleware(['universal', 'web']);
         });
 
         if (InitializeTenancyByPath::inGlobalStack()) {
             TenancyUrlGenerator::$prefixRouteNames = true;
 
-            /** @var ReregisterUniversalRoutes $reregisterRoutes */
-            $reregisterRoutes = app(ReregisterUniversalRoutes::class);
+            /** @var CloneRoutesAsTenant $reregisterRoutes */
+            $reregisterRoutes = app(CloneRoutesAsTenant::class);
 
             /**
              * You can provide a closure for re-registering a specific route, e.g.:
@@ -185,8 +185,8 @@ class TenancyServiceProvider extends ServiceProvider
              *     $route->middleware('tenant');
              * });
              *
-             * To see the default behavior of re-registering the universal routes, check out the reregisterRoute() method in ReregisterUniversalRoutes.
-             * @see ReregisterUniversalRoutes
+             * To see the default behavior of re-registering the universal routes, check out the reregisterRoute() method in CloneRoutesAsTenant.
+             * @see CloneRoutesAsTenant
              */
 
             $reregisterRoutes->handle();
